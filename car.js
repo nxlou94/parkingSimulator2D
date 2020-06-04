@@ -20,23 +20,23 @@ function rect(x, y, w, h, alpha){
         this.color = color;
     }
     this.stroke = function(){
-        cxt.save();
-        cxt.strokeStyle = this.color;
-        cxt.lineWidth = 1;
-        cxt.strokeRect(this.vertex[0][0], this.vertex[0][1], 2, 2);
-        cxt.strokeRect(this.vertex[3][0], this.vertex[3][1], 2, 2);
-        cxt.strokeRect(this.vertex[1][0], this.vertex[1][1], 2, 2);
-        cxt.strokeRect(this.vertex[2][0], this.vertex[2][1], 2, 2);
-        cxt.restore();
+        ctx.save();
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(this.vertex[0][0], this.vertex[0][1], 2, 2);
+        ctx.strokeRect(this.vertex[3][0], this.vertex[3][1], 2, 2);
+        ctx.strokeRect(this.vertex[1][0], this.vertex[1][1], 2, 2);
+        ctx.strokeRect(this.vertex[2][0], this.vertex[2][1], 2, 2);
+        ctx.restore();
     };
     this.draw = function(){
-        cxt.save();
-        cxt.translate(this.x, this.y);
-        cxt.rotate(this.alpha);
-        cxt.strokeStyle = this.color;
-        cxt.lineWidth = 1;
-        cxt.strokeRect(0, 0, this.w, this.h);
-        cxt.restore();
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.alpha);
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0, 0, this.w, this.h);
+        ctx.restore();
         //console.log(this.vertex);
     };
 };
@@ -154,12 +154,9 @@ counter = 0;
 interval = 40;
 fps = 1000 / interval;
 
-var stillCar = new car();
-stillCar.setPos(200, 200, 0, 0);
-
 var myCar = new car();
-var cxt = document.getElementById('canv').getContext('2d');
-myCar.setPos(270, 250, 0, 0);
+var ctx = document.getElementById('canv').getContext('2d');
+myCar.setPos(100, 100, Math.PI * 3 / 2, 0);
 myCar.draw();
 
 window.addEventListener('keydown', 
@@ -294,37 +291,37 @@ function car(length = 80, width = 36, frontWheelPos = 16, rearWheelPos = 64, fro
         
     };
     this.draw = function(){
-        cxt.save();
-        cxt.fillStyle = color;
-        cxt.translate(this.x, this.y);
-        //cxt.translate(250, 250);
-        cxt.rotate(this.theta);
-        cxt.globalAlpha = 0.5;
-        cxt.fillRect(-this.width/2, -this.length/2, this.width, this.length);
-        cxt.globalAlpha = 1;
-        cxt.fillStyle = '#000';
-        cxt.fillText(Math.round(this.IRR), 0, 0);
-        cxt.fillRect(this.ICRL - 1, this.yRearWheel - 1, 2, 2);
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.translate(this.x, this.y);
+        //ctx.translate(250, 250);
+        ctx.rotate(this.theta);
+        ctx.globalAlpha = 0.5;
+        ctx.fillRect(-this.width/2, -this.length/2, this.width, this.length);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#000';
+        ctx.fillText(Math.round(this.IRR), 0, 0);
+        ctx.fillRect(this.ICRL - 1, this.yRearWheel - 1, 2, 2);
         this.wheels.forEach(wheel => {
             if(wheel.steer && wheel.beta){
-                cxt.save();
-                cxt.translate(wheel.x, wheel.y);
-                cxt.rotate(wheel.beta);
-                cxt.fillRect(-2, -this.wheelRadius, 4, 10);
-                //cxt.fillText(Math.round(wheel.IRR), 0, 0);
-                cxt.restore();
+                ctx.save();
+                ctx.translate(wheel.x, wheel.y);
+                ctx.rotate(wheel.beta);
+                ctx.fillRect(-2, -this.wheelRadius, 4, 10);
+                //ctx.fillText(Math.round(wheel.IRR), 0, 0);
+                ctx.restore();
             } else {
-                cxt.fillRect(wheel.x - 2, wheel.y - this.wheelRadius, 4, 10);
-                //cxt.fillText(Math.round(wheel.IRR), wheel.x, wheel.y);
+                ctx.fillRect(wheel.x - 2, wheel.y - this.wheelRadius, 4, 10);
+                //ctx.fillText(Math.round(wheel.IRR), wheel.x, wheel.y);
             }
         });
-        cxt.restore();
+        ctx.restore();
         this.rect.draw();
-        //cxt.fillRect(this.x + this.ICRL * Math.cos(this.theta) - 1, this.y + this.ICR * Math.sin(this.theta) - 1, 2, 2);
+        //ctx.fillRect(this.x + this.ICRL * Math.cos(this.theta) - 1, this.y + this.ICR * Math.sin(this.theta) - 1, 2, 2);
     };
     this.drawStats = function () {
-        cxt.strokeText(this.speed, 400, 400);
-        cxt.strokeText(this.currentSteer, 400, 450);
+        ctx.strokeText('Speed: ' + this.speed, 10, 20);
+        ctx.strokeText('Steer: ' + this.currentSteer, 10, 50);
     };
 };
 
@@ -332,7 +329,7 @@ var longPressTime = Math.round(fps / 2);
 
 function update(){
     //console.log(myCar.x, myCar.y, myCar.theta);
-    cxt.clearRect(0, 0, 500, 500);
+    ctx.clearRect(0, 0, 500, 500);
     keys.forEach(function(downTime, index){
         if(downTime > 0) {
             if(downTime < longPressTime) {
@@ -347,7 +344,7 @@ function update(){
         var a = actions.shift();
         //console.log(a);
         if(keyListSteer.includes(a[0])) {
-            if([1, longPressTime].includes(a[1])) {
+            if(a[1] == 1) {
                 if(a[0] == 'q')
                     myCar.setSteer(36);
                 else if(a[0] == 'e')
@@ -361,29 +358,36 @@ function update(){
                 else if(a[0] == 'c')
                     myCar.setSteer(-1);
             }
-        } else if(keyListPedalNGear.includes(a[0])) {
-            if(a[1] == 0) {
+        }else if(keyListPedalNGear.includes(a[0]) && [0, 1].includes(a[1])){
+            if(a[1] == 0){
                 //myCar.speed = 0;
-            } else if(a[0] == 'ArrowUp') {
+            }else if(a[0] == 'ArrowUp'){
                 myCar.speed += 1;
-                if(myCar.speed == 11) {
+                if(myCar.speed == 6) {
                     myCar.speed -= 1;
                 }
-            } else if(a[0] == 'ArrowDown') {
+            }else if(a[0] == 'ArrowDown'){
                 myCar.speed -= 1;
-                if(myCar.speed == -6) {
+                if(myCar.speed == -3) {
                     myCar.speed += 1;
                 }
             }
         }
     }
+    ctx.canvas.width = window.innerWidth - 2;
+    ctx.canvas.height = window.innerHeight - 1;
     myCar.steer();
     myCar.move();
+    ctx.save();
+    ctx.translate(window.innerWidth / 2, window.innerHeight / 2);
+    ctx.rotate(-myCar.theta + Math.PI);
+    ctx.translate(-myCar.x, -myCar.y);
     inTarget();
     target.draw();
     myCar.draw();
     obsCollision();
     drawObs();
+    ctx.restore();
     myCar.drawStats();
 }
 
