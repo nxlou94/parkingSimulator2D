@@ -187,7 +187,7 @@ function wheel(x, y, steer = true){
     this.IRR = 0;
 }
 
-function car(length = 80, width = 36, frontWheelPos = 16, rearWheelPos = 64, frontTrack = 30, rearTrack = 30, maxSteer = Math.PI / 5, wheelRadius = 5, color = '#FF880F'){
+function car(length = 80, width = 36, frontWheelPos = 16, rearWheelPos = 64, frontTrack = 30, rearTrack = 30, maxSteer = Math.PI / 5, wheelRadius = 5, color = '#00DFDF'){
     this.length = length;
     this.width = width;
     this.frontWheelPos = frontWheelPos;
@@ -208,10 +208,7 @@ function car(length = 80, width = 36, frontWheelPos = 16, rearWheelPos = 64, fro
     this.targetSteer = 0;
     this.currentSteer = 0;
     this.gear = 'D';
-    this.gearLock = false;
-    this.pedalLock = false;
-    this.arrowUp = 'u';
-    this.ArrowDown = 'u';
+    this.gearState = 0;
     this.speed = 0;
     this.IRR = 0;
     this.wheels = 
@@ -226,20 +223,26 @@ function car(length = 80, width = 36, frontWheelPos = 16, rearWheelPos = 64, fro
         this.beta = beta;
         this.setRect();
     };
-    this.move = function() {
+    this.move = function(){
+        let speed;
+        if(this.gear == 'D'){
+            speed = this.speed / 5;
+        }else{
+            speed = -this.speed / 5;
+        }
         if(this.IRR == 0) {
-            this.x += -this.speed * Math.sin(this.theta);
-            this.y += this.speed * Math.cos(this.theta);
+            this.x += -speed * Math.sin(this.theta);
+            this.y += speed * Math.cos(this.theta);
         } else {
-            if(this.speed != 0) {
-                dTheta = this.speed / -this.IRR;
+            if(speed != 0) {
+                dTheta = speed / -this.IRR;
                 this.theta += dTheta;
                 this.thetaG += dTheta;
                 this.x = this.ICRG[0] - this.IRR * Math.cos(this.thetaG);
                 this.y = this.ICRG[1] - this.IRR * Math.sin(this.thetaG);
             }
         }
-        if(this.speed != 0){
+        if(speed != 0){
             this.setRect();
         }
     };
@@ -263,7 +266,7 @@ function car(length = 80, width = 36, frontWheelPos = 16, rearWheelPos = 64, fro
             ];
             this.IRR = Math.sign(this.ICRL) * Math.sqrt(this.ICRL ** 2 + this.yRearWheel ** 2);
             this.thetaG = this.theta + Math.atan(this.yRearWheel / this.ICRL);
-            console.log(this.theta, this.thetaG);
+            //console.log(this.theta, this.thetaG);
         } else {
             this.ICRL = 0;
             this.IRR = 0;
@@ -281,28 +284,109 @@ function car(length = 80, width = 36, frontWheelPos = 16, rearWheelPos = 64, fro
         });
         //console.log(this.currentSteer, this.ICRL);
     };
-    this.pedalNGear = function(key){
-        
+    this.pedalNGear = function(key, frame){
+        if(this.gearState == -1){
+            if(frame == 0 && ((this.gear == 'D' && key == 'ArrowUp') || (this.gear == 'R' && key == 'ArrowDown'))){
+                this.gearState = 0;
+            }
+            return;
+        }else{
+            let aKey, bKey, speedLim;
+            if(this.gear == 'D'){
+                aKey = 'ArrowUp';
+                bKey = 'ArrowDown';
+                speedLim = 25;
+            }else{
+                aKey = 'ArrowDown';
+                bKey = 'ArrowUp';
+                speedLim = 10;
+            }
+            if(key == aKey && frame != 0){
+                this.speed = Math.min(speedLim, this.speed + 1);
+                this.gearState = 1;
+                return;
+            }else if(key == bKey && frame != 0){
+                if(this.speed > 0){
+                    this.speed = Math.max(0, this.speed - 3);
+                }else if(this.speed == 0 && frame == 1){
+                    if(this.gear == 'D'){
+                        this.gear = 'R';
+                    }else{
+                        this.gear = 'D';
+                    }
+                    this.gearState = -1;
+                }
+            }else if(key == bKey && frame == 0 && this.speed == 0 && this.gearState == 1){
+                this.gearState == 0;
+                return;
+            }
+        }
     }
     this.setRect = function(){
-        this.rect = new rect(this.x + Math.sin(this.theta) * this.length / 2 - Math.cos(this.theta) * this.width / 2, this.y  - Math.cos(this.theta) * this.length / 2 - Math.sin(this.theta) * this.width / 2, this.width, this.length, this.theta);
-    };
-    this.collision = function(obj2){
-        
+        this.rect = new rect(this.x + Math.sin(this.theta) * this.length / 2 - Math.cos(this.theta) * this.width / 2, 
+        this.y  - Math.cos(this.theta) * this.length / 2 - Math.sin(this.theta) * this.width / 2, 
+        this.width, this.length, this.theta);
     };
     this.draw = function(){
         ctx.save();
         ctx.fillStyle = color;
         ctx.translate(this.x, this.y);
-        //ctx.translate(250, 250);
         ctx.rotate(this.theta);
         ctx.globalAlpha = 0.5;
         ctx.fillRect(-this.width/2, -this.length/2, this.width, this.length);
         ctx.globalAlpha = 1;
         ctx.fillStyle = '#000';
-        ctx.fillText(Math.round(this.IRR), 0, 0);
-        ctx.fillRect(this.ICRL - 1, this.yRearWheel - 1, 2, 2);
+        //ctx.fillText(Math.round(this.IRR), 0, 0);
+        var gradient = ctx.createRadialGradient(0,
+            0, 
+            myCar.length / 3, 
+            0, 
+            0,
+            myCar.length * 1.1);
+        gradient.addColorStop(0, 'rgba(0, 255, 200, 1)');
+        gradient.addColorStop(1, 'rgba(0, 255, 200, 0)');
         this.wheels.forEach(wheel => {
+            if((wheel.steer && this.gear == 'D') || (!wheel.steer && this.gear == 'R')){
+                ctx.save();
+                ctx.lineWidth = 3;
+                //ctx.fillStyle = gradient;
+                ctx.strokeStyle = gradient;
+                let l = Math.min(Math.PI / 2, this.length / wheel.IRR);
+                if(this.currentSteer == 0){
+                    if(this.gear == 'D'){
+                        ctx.beginPath();
+                        ctx.moveTo(wheel.x, wheel.y);
+                        ctx.lineTo(wheel.x, wheel.y + this.length);
+                        ctx.stroke();
+                    }else{
+                        ctx.beginPath();
+                        ctx.moveTo(wheel.x, wheel.y);
+                        ctx.lineTo(wheel.x, wheel.y - this.length);
+                        ctx.stroke();
+                    }
+                }else{
+                    ctx.beginPath();
+                    let r, sAngle, eAngle, c;
+                    if(wheel.IRR < 0){
+                        r = -wheel.IRR;
+                        sAngle = wheel.beta;
+                        eAngle = wheel.beta - l;
+                        c = false;
+                    }else{
+                        r = wheel.IRR;
+                        sAngle = Math.PI + wheel.beta;
+                        eAngle = Math.PI + wheel.beta - l;
+                        c = true;
+                    }
+                    if(this.gear == 'R'){
+                        sAngle += l;
+                        eAngle += l;
+                    }
+                    ctx.arc(this.ICRL, this.yRearWheel, r, sAngle, eAngle, c);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
             if(wheel.steer && wheel.beta){
                 ctx.save();
                 ctx.translate(wheel.x, wheel.y);
@@ -322,6 +406,7 @@ function car(length = 80, width = 36, frontWheelPos = 16, rearWheelPos = 64, fro
     this.drawStats = function () {
         ctx.strokeText('Speed: ' + this.speed, 10, 20);
         ctx.strokeText('Steer: ' + this.currentSteer, 10, 50);
+        ctx.strokeText('- ' + this.gear + ' -', 10, 35);
     };
 };
 
@@ -329,7 +414,7 @@ var longPressTime = Math.round(fps / 2);
 
 function update(){
     //console.log(myCar.x, myCar.y, myCar.theta);
-    ctx.clearRect(0, 0, 500, 500);
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     keys.forEach(function(downTime, index){
         if(downTime > 0) {
             if(downTime < longPressTime) {
@@ -358,20 +443,8 @@ function update(){
                 else if(a[0] == 'c')
                     myCar.setSteer(-1);
             }
-        }else if(keyListPedalNGear.includes(a[0]) && [0, 1].includes(a[1])){
-            if(a[1] == 0){
-                //myCar.speed = 0;
-            }else if(a[0] == 'ArrowUp'){
-                myCar.speed += 1;
-                if(myCar.speed == 6) {
-                    myCar.speed -= 1;
-                }
-            }else if(a[0] == 'ArrowDown'){
-                myCar.speed -= 1;
-                if(myCar.speed == -3) {
-                    myCar.speed += 1;
-                }
-            }
+        }else if(keyListPedalNGear.includes(a[0])){
+            myCar.pedalNGear(a[0], a[1]);
         }
     }
     ctx.canvas.width = window.innerWidth - 2;
