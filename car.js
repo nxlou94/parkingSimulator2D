@@ -2,12 +2,14 @@ bgColor = '#a1a1a1';
 
 var obsList = [];
 function makeObs(x, y, w, h, alpha){
+    let r = new rect(x, y, w, h, alpha);
+    r.setStrokeWidth(2);
     obsList.push(new rect(x, y, w, h, alpha));
 }
 
 function drawObs(){
     obsList.forEach(obs => {
-        obs.draw(ctx);
+        obs.stroke(ctx);
         //obs.stroke();
     })
 }
@@ -25,10 +27,11 @@ function obsCollision(){
 makeObs(200, 200, 32, 80, 0);
 makeObs(300, 200, 32, 80, 0);
 target = new rect(240, 190, 52, 100, 0);
+target.setStrokeWidth(3);
 
 function inTarget(){
     if(rectContain(myCar.rect, target)){
-        target.color = 'green';
+        target.color = '#70FF70';
     }else{
         target.color = 'white';
     }
@@ -352,10 +355,10 @@ function update(){
     ctx.rotate(-myCar.theta + Math.PI);
     ctx.translate(-myCar.x, -myCar.y);
     inTarget();
-    target.draw(ctx);
-    myCar.draw();
+    target.stroke(ctx);
     obsCollision();
     drawObs();
+    myCar.draw();
     ctx.restore();
     myCar.drawStats();
 }

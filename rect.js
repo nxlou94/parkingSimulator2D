@@ -16,17 +16,23 @@ function rect(x, y, w, h, alpha){
     this.xMin = Math.min(this.vertex.map(v => v[0]));
     this.yMax = Math.max(this.vertex.map(v => v[1]));
     this.yMin = Math.min(this.vertex.map(v => v[1]));
+    this.strokeWidth = 2;
     this.setColor = function(color){
         this.color = color;
+    }
+    this.setStrokeWidth = function(w){
+        this.strokeWidth = w;
     }
     this.stroke = function(){
         ctx.save();
         ctx.strokeStyle = this.color;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(this.vertex[0][0], this.vertex[0][1], 2, 2);
-        ctx.strokeRect(this.vertex[3][0], this.vertex[3][1], 2, 2);
-        ctx.strokeRect(this.vertex[1][0], this.vertex[1][1], 2, 2);
-        ctx.strokeRect(this.vertex[2][0], this.vertex[2][1], 2, 2);
+        ctx.lineWidth = this.strokeWidth;
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.alpha);
+        ctx.strokeRect(this.strokeWidth / 2, 
+            this.strokeWidth / 2, 
+            this.w - this.strokeWidth, 
+            this.h - this.strokeWidth);
         ctx.restore();
     };
     this.draw = function(ctx, color = '#A1A1A1'){
